@@ -15,9 +15,20 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.github.psambit9791</groupId>
+            <artifactId>jdsp</artifactId>
+            <version>0.6.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
             <version>3.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>RELEASE</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
