@@ -86,7 +86,7 @@ public class AptDecoder implements IAptDecoder {
         for (int i = 0; i < complexArray.imag.length; i++) {
             amplitudeEnvelope[i] = Math.sqrt(complexArray.real[i] * complexArray.real[i] + complexArray.imag[i] * complexArray.imag[i]);
         }
-        SignalUtils.plotSignals(signal, amplitudeEnvelope, signal.length / 4);
+        //SignalUtils.plotSignals(signal, amplitudeEnvelope, signal.length / 2);
 
         return amplitudeEnvelope;
     }
@@ -105,35 +105,22 @@ public class AptDecoder implements IAptDecoder {
         }
         double[] reshaped_cut = new double[reshaped.length];
         for (int i = 0; i < reshaped.length; i++) {
-            reshaped_cut[i] = reshaped[i][2];
+            //Don't know why you only get every 3rd value and skip the rest
+            //You could also get every 2nd or 4th but you have to skip the rest
+            if (reshaped[i][3] > 10000)
+                reshaped[i][3] = 10000;
+            reshaped_cut[i] = reshaped[i][3];
         }
 
-        double minValue = Arrays.stream(reshaped_cut).min().getAsDouble();
+        double minValue = 0.0;
         double maxValue = Arrays.stream(reshaped_cut).max().getAsDouble();
 
         int[] data = new int[reshaped_cut.length];
         for (int i = 0; i < reshaped_cut.length; i++) {
-            data[i] = (int) mapOneRangeToAnother(reshaped_cut[i], minValue, maxValue, 0, 255, 2);
+            data[i] = (int) mapOneRangeToAnother(reshaped_cut[i], minValue, maxValue, 0, 255, 1);
         }
 
         return data;
-//        int[] data = new int[amplitudeEnvelope.length / 5];
-//
-//        double amplitudeEnvelopeMinValue = (int) Arrays.stream(amplitudeEnvelope).min().getAsDouble();
-//        double amplitudeEnvelopeMaxValue = (int) Arrays.stream(amplitudeEnvelope).max().getAsDouble();
-//        for (int i = 2; i < data.length; i = i + 5) {
-//            int newValue = (int) mapOneRangeToAnother(amplitudeEnvelope[i], amplitudeEnvelopeMinValue, amplitudeEnvelopeMaxValue,
-//                    0, 255, 1);
-//
-//            //Just in case
-//            if (newValue > 255)
-//                newValue = 255;
-//            if (newValue < 0)
-//                newValue = 0;
-//
-//            data[i] = newValue;
-//        }
-//        return data;
     }
 
     /**
@@ -150,15 +137,8 @@ public class AptDecoder implements IAptDecoder {
         for (int i = 0; i < data.length; i++) {
             if (i % Apt.LINE_LENGTH == 0 && i != 0)
                 line++;
-            try {
-                bufferedImage.setRGB(i - (line * Apt.LINE_LENGTH), line, new Color(data[i], data[i], data[i]).getRGB());
 
-            } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
-                System.out.println("(" + (i - (line * Apt.LINE_LENGTH)) + "),(" + line + ")");
-                System.out.println(data[i]);
-                e.printStackTrace();
-                System.exit(1);
-            }
+            bufferedImage.setRGB(i - (line * Apt.LINE_LENGTH), line, new Color(data[i], data[i], data[i]).getRGB());
         }
         try {
             File file = new File("src/main/resources/out.png");
