@@ -8,6 +8,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * @author : Enrico Gamil Toros
@@ -16,8 +17,8 @@ import java.io.IOException;
  * @since : 21.02.21
  **/
 public class Apt {
-    private final float SAMPLE_RATE = 20800f;
-    private final int LINE_LENGTH = 2080;
+    public static final float INTERMEDIATE_SAMPLE_RATE = 20800f;
+    public static final int LINE_LENGTH = 2080;
     private final AudioFormat audioFormat;
     private File audioFile;
     private byte[] audioAsBytes;
@@ -41,17 +42,11 @@ public class Apt {
         audioAsBytes = audioInputStream.readAllBytes();
         this.audioFormat = audioInputStream.getFormat();
         float inputSampleRate = audioFormat.getSampleRate();
-        if (inputSampleRate != SAMPLE_RATE)
-            throw new UnsupportedAudioSampleRate("Input Audio has to have sample rate of " + SAMPLE_RATE + " but was " + inputSampleRate);
+
+        if (inputSampleRate != INTERMEDIATE_SAMPLE_RATE)
+            throw new UnsupportedAudioSampleRate("Input Audio has to have sample rate of " + INTERMEDIATE_SAMPLE_RATE + " but was " + inputSampleRate);
         this.audioFile = audioFile;
-    }
-
-    public float getSAMPLE_RATE() {
-        return SAMPLE_RATE;
-    }
-
-    public int getLINE_LENGTH() {
-        return LINE_LENGTH;
+        audioInputStream.close();
     }
 
     public File getAudioFile() {

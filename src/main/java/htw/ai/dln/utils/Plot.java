@@ -1,4 +1,4 @@
-package htw.ai.dln;
+package htw.ai.dln.utils;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
