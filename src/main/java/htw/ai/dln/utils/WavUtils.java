@@ -1,5 +1,7 @@
 package htw.ai.dln.utils;
 
+import htw.ai.dln.Exceptions.UnsupportedFrameSizeException;
+
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -7,7 +9,6 @@ import javax.sound.sampled.AudioSystem;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * @author : Enrico Gamil Toros
@@ -21,18 +22,19 @@ public class WavUtils {
      * Converts the byte array into an array of integers where each integer
      * corresponds to an audio sample.
      *
-     * @param audioData the audio data
-     * @param format    the audio format
-     * @return the corresponding array of integers
+     * @param audioData   the audio data as bytes
+     * @param frameSize   size of frames
+     * @param isBigEndian is big endian
+     * @return the corresponding array of integers as samples
      */
-    public static int[] convertByteArray(byte[] audioData, AudioFormat format) {
+    public static int[] convertByteArray(byte[] audioData, int frameSize, boolean isBigEndian) throws UnsupportedFrameSizeException {
         int MAX_SIZE_RMS = audioData.length;
 
-        if (format.getFrameSize() == 2 || format.getFrameSize() == 4) {
+        if (frameSize == 2) {
             int[] samples = new int[Math.min(audioData.length / 2, MAX_SIZE_RMS)];
             int offset = audioData.length - 2 * samples.length;
             for (int i = 0; i < samples.length; i++) {
-                if (format.isBigEndian()) {
+                if (isBigEndian) {
                     samples[i] = ((audioData[offset + i * 2] << 8)
                             | (audioData[offset + i * 2 + 1] & 0xFF));
                 } else {
@@ -41,7 +43,7 @@ public class WavUtils {
                 }
             }
             return samples;
-        } else if (format.getFrameSize() == 1) {
+        } else if (frameSize == 1) {
             int[] samples = new int[Math.min(audioData.length, MAX_SIZE_RMS)];
             int offset = audioData.length - samples.length;
             for (int i = 0; i < samples.length; i++) {
@@ -49,8 +51,7 @@ public class WavUtils {
             }
             return samples;
         } else {
-            throw new RuntimeException(
-                    "unsupported frame size: " + format.getFrameSize());
+            throw new UnsupportedFrameSizeException("Unsupported frame size of " + frameSize);
         }
     }
 
@@ -68,9 +69,10 @@ public class WavUtils {
         // 16bits per channel -> 2 bytes per channel
         int sampleByteSize = sampleSizeInBits / 8;
 
+        // if 2 bytes per sample CH1,CH1,CH2,CH2,...
         for (int i = 0; i < stereoAudio.length / sampleByteSize; i = i + 2) {
-            buffer[i] = stereoAudio[sampleByteSize * i];
-            buffer[i] = stereoAudio[sampleByteSize * i + 1];
+            buffer[i] = stereoAudio[i * sampleByteSize];
+            buffer[i + 1] = stereoAudio[i * sampleByteSize + 1];
         }
         return buffer;
     }

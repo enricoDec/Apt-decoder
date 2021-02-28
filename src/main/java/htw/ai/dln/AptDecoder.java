@@ -1,21 +1,21 @@
 package htw.ai.dln;
 
-import htw.ai.dln.Exceptions.UnsupportedAudioChannelSize;
+import htw.ai.dln.Exceptions.NoSyncFrameFoundException;
+import htw.ai.dln.Exceptions.UnsupportedFrameSizeException;
+import htw.ai.dln.utils.SignalUtils;
+import htw.ai.dln.utils.WavUtils;
 import htw.ai.dln.utils.hilbert.ComplexArray;
 import htw.ai.dln.utils.hilbert.Hilbert;
-import htw.ai.dln.utils.WavUtils;
-import htw.ai.dln.utils.SignalUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
-import java.lang.reflect.Array;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * @author : Enrico Gamil Toros
@@ -26,58 +26,146 @@ import java.util.stream.Stream;
 public class AptDecoder implements IAptDecoder {
     private final Apt apt;
     private byte[] audio;
+    private final float MIN_SYNC_CORRELATION = 0.9f;
+    // Optional Variables used to store store debug info
     private int expectedLines;
     private int actualLines;
-    private final static float SYNC_CORRELATION = 0.9f;
+    private List<Integer> foundSyncFrames = new ArrayList<>();
+    public boolean isInteractive = true;
 
+    /**
+     * Apt decoder
+     *
+     * @param apt Wav to decode
+     */
     public AptDecoder(Apt apt) {
         this.apt = apt;
     }
 
     /**
      * APT Decoder
-     * Steps:
-     * 1. Check audio channel number
-     * 1.1 If more than one convert to mono
-     * 2. Convert bytes to samples as doubles
+     * Decodes an audio to an image
+     * Result will be the raw decoded image (no sync) or corrections
+     * The Result will depend a lot from the amount of noise in the input signal
      *
      * @param threads number of threads to use
-     * @throws UnsupportedAudioChannelSize if audio has more than two channels
-     * @throws IOException
+     * @return int[] each int equals to one pixel, ranges from 0 to 255
      */
-    public void decode(int threads) throws UnsupportedAudioChannelSize, IOException {
+    public int[] decode(int threads) throws UnsupportedFrameSizeException {
         //Check if stereo or mono and get audio without header as byte[]
-        switch (apt.getAudioFormat().getChannels()) {
+        int[] samples;
+        switch (apt.AUDIO_FORMAT.getChannels()) {
             case 1:
-                audio = apt.getAudioAsBytes();
+                audio = apt.AUDIO_BYTES;
+                //Convert byte[] to sample[]
+                samples = WavUtils.convertByteArray(audio, apt.AUDIO_FORMAT.getFrameSize(),
+                        apt.AUDIO_FORMAT.isBigEndian());
                 break;
             case 2:
-                System.out.println("Audio has 2 channels");
-                audio = WavUtils.stereoToMono(apt.getAudioAsBytes(), apt.getAudioFormat().getSampleSizeInBits());
+                statusUpdate("Audio has two channels, converting to single channel.");
+                audio = WavUtils.stereoToMono(apt.AUDIO_BYTES, apt.AUDIO_FORMAT.getSampleSizeInBits());
+                //Convert byte[] to sample[]
+                samples = WavUtils.convertByteArray(audio, 2, apt.AUDIO_FORMAT.isBigEndian());
                 break;
             default:
-                throw new UnsupportedAudioChannelSize("Audio has " + apt.getAudioFormat().getChannels());
+                throw new IllegalStateException("Unexpected value. Channels: " + apt.AUDIO_FORMAT.getChannels());
         }
 
-        //Convert byte[] to samples as double[]
-        int[] result = WavUtils.convertByteArray(audio, apt.getAudioFormat());
-        double[] signal = new double[result.length];
-        for (int i = 0; i < result.length; i++) {
-            signal[i] = result[i];
+        // Convert int sample[] to double sample[]
+        double[] signal = new double[samples.length];
+        for (int i = 0; i < samples.length; i++) {
+            signal[i] = samples[i];
         }
 
         // Reduce unnecessary sample rate
         // Not sure why?
-        int truncate = (int) (apt.getAudioFormat().getSampleRate() * (signal.length / (int) apt.getAudioFormat().getSampleRate()));
+        int truncate = (int) (apt.AUDIO_FORMAT.getSampleRate() * (signal.length / (int) apt.AUDIO_FORMAT.getSampleRate()));
         signal = Arrays.copyOf(signal, truncate);
 
         // Perform Hilbert Transform and get amplitude Envelope
         double[] amplitudeEnvelope = hilbert(signal);
         // Map values to "digital" values 0 to 255
         int[] digitalized = digitalize(amplitudeEnvelope);
-        // Sync lines
-        int[] synced = sync(digitalized);
-        makeImage(synced);
+
+        return digitalized;
+    }
+
+
+    /**
+     * Sync imag with Sync frames to fix doppler effect and fix first line offset
+     *
+     * @param digitalized Digitalized signal, should range from 0 to 255
+     * @return synced Image with syn Frames
+     */
+    public int[] syncFrames(int[] digitalized) throws NoSyncFrameFoundException {
+        // Sync Patter BB WW BB WW BB...
+        int[] syncPattern = new int[]{0, 0, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0};
+        int[] synced = new int[0];
+        //To get a better correlation you could try to shift all values to get a higher contrast
+
+        // Loop entire array and look for positive correlation of sync A frame
+        // If found shift by offset from last synced line to current line
+        // and make a copy of synced line(s) in sync[] <- Do this only if offset changed!
+        int indexOfLastSyncedLine = 0;
+        int previousOffset = 0;
+        for (int i = 0; i < digitalized.length; i++) {
+
+            // Copy pixels to fit in sync pattern
+            int[] y = Arrays.copyOfRange(digitalized, i, i + syncPattern.length);
+            // Calc correlation
+            double correlation = SignalUtils.correlation(syncPattern, y);
+
+            if (correlation > MIN_SYNC_CORRELATION) {
+                // Offset is rest of i / 2080
+                int currentOffset = i % Apt.LINE_LENGTH;
+
+                // Copy corrected line from last synced line to current one, this only if the current offset changed
+                if (currentOffset != previousOffset) {
+                    synced = IntStream.concat(Arrays.stream(synced),
+                            Arrays.stream(Arrays.copyOfRange(digitalized,
+                                    indexOfLastSyncedLine + (currentOffset - previousOffset),
+                                    i + Apt.LINE_LENGTH))).toArray();
+                    // Add to list to keep track of found lines
+                    foundSyncFrames.add(i);
+                    // Skip to next line
+                    i = i + Apt.LINE_LENGTH;
+                    indexOfLastSyncedLine = i;
+                    previousOffset = currentOffset;
+                }
+            }
+            // TODO: if sync frame of last line not found add with last offset
+        }
+        if (foundSyncFrames.size() == 0)
+            throw new NoSyncFrameFoundException("Could not find any sync Frame");
+        return synced;
+    }
+
+    /**
+     * Create Image from digitalized signal
+     *
+     * @param data         digitalized Signal
+     * @param saveLocation path to output file
+     */
+    public void saveImage(int[] data, File saveLocation) {
+        //if last line is not complete still count it
+        actualLines = (int) Math.ceil((float) data.length / Apt.LINE_LENGTH);
+
+        int width = Apt.LINE_LENGTH;
+        int height = actualLines;
+        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        int line = 0;
+        for (int i = 0; i < data.length; i++) {
+            if (i % Apt.LINE_LENGTH == 0 && i != 0)
+                line++;
+
+            bufferedImage.setRGB(i - (line * Apt.LINE_LENGTH), line, new Color(data[i], data[i], data[i]).getRGB());
+        }
+        try {
+            ImageIO.write(bufferedImage, "png", saveLocation);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -110,8 +198,9 @@ public class AptDecoder implements IAptDecoder {
      * @return digitalized signal as int[]
      */
     private int[] digitalize(double[] amplitudeEnvelope) {
-        double[][] reshaped = new double[amplitudeEnvelope.length / 5][5];
 
+        // Not sure about this part but it's needed to work
+        double[][] reshaped = new double[amplitudeEnvelope.length / 5][5];
         for (int i = 0; i < amplitudeEnvelope.length / 5; i++) {
             System.arraycopy(amplitudeEnvelope, i * 5, reshaped[i], 0, 5);
         }
@@ -123,23 +212,22 @@ public class AptDecoder implements IAptDecoder {
         }
 
         expectedLines = (int) Math.ceil((float) reshapedCut.length / Apt.LINE_LENGTH);
-
         if (expectedLines < 1)
-            throw new IllegalArgumentException("Less than one line found...");
+            throw new IllegalArgumentException("Data contains no lines");
 
         // Cutting interference
         // To get a "better" max to avoid getting an anomaly as max value and getting so a dark image
         // when digitalizing values since it will be mapped with a wrong range
         // (implementing low pass filter or smth would be much better)
 
-        // AVG
-        double avg = 0;
-        for (int i = 0; i < reshapedCut.length; i++) {
-            avg += reshapedCut[i];
-        }
-        avg = avg / reshaped.length;
-
-        // Cut values above and under
+//        // AVG
+//        double avg = 0;
+//        for (int i = 0; i < reshapedCut.length; i++) {
+//            avg += reshapedCut[i];
+//        }
+//        avg = avg / reshaped.length;
+//
+//        // Cut values above and under
 //        for (int i = 0; i < reshapedCut.length; i++) {
 //            if (reshapedCut[i] > avg * 2.5)
 //                reshapedCut[i] = 0;
@@ -148,7 +236,7 @@ public class AptDecoder implements IAptDecoder {
         double maxValueAvG = Arrays.stream(reshapedCut).max().getAsDouble();
         double minValueAvg = 0;
 
-        // Digitalize
+        // Map values to range from 0 to 255
         int[] data = new int[reshapedCut.length];
         for (int i = 0; i < reshapedCut.length; i++) {
             data[i] = (int) mapOneRangeToAnother(reshapedCut[i], minValueAvg, maxValueAvG, 0, 255, 1);
@@ -156,6 +244,7 @@ public class AptDecoder implements IAptDecoder {
 
 
         // PLOTTING
+        // TODO: Remove
 //        int[] temp = Arrays.copyOfRange(data, data.length / 2, data.length / 2 + 1040);
 //        double[] temp2 = new double[data.length];
 //
@@ -167,87 +256,19 @@ public class AptDecoder implements IAptDecoder {
         return data;
     }
 
-    private List<Integer> foundSyncFrames = new ArrayList<>();
-
-    // Sync Frame Pattern 36 pixels from WW BB WW BB WW BB ... WWWW WWWW
-    // 0 is Black, 255 is White
-    private int[] sync(int[] reshaped) {
-        int[] x = new int[]{0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0};
-        int[] synced = new int[0];
-        //int[] shifted = new int[reshaped.length];
-
-//        for (int i = 0; i < reshaped.length; i++) {
-//            if (reshaped[i] - 120 > 0)
-//                shifted[i] = reshaped[i] - 120;
-//        }
-
-        //Loop entire array and look for positive correlation of sync A frame
-        int lastLineFound = 0;
-        int oldOffset = 0;
-        for (int i = 0; i < reshaped.length; i++) {
-
-            int[] y = Arrays.copyOfRange(reshaped, i, i + x.length);
-            double correlation = SignalUtils.correlation(x, y);
-
-            if (correlation > SYNC_CORRELATION) {
-                System.out.println("Start of a line found with correlation of" + " " + correlation);
-                System.out.println("Prob at line: " + i / Apt.LINE_LENGTH + " i= " + i);
-                int offset = i % Apt.LINE_LENGTH;
-                // Copy corrected current line and lines before if not already corrected and offset changed
-                if (offset != oldOffset) {
-                    System.out.println("offset = " + offset);
-                    synced = IntStream.concat(Arrays.stream(synced), Arrays.stream(Arrays.copyOfRange(reshaped, lastLineFound + (offset - oldOffset), i + Apt.LINE_LENGTH))).toArray();
-                    System.out.println("Copyed array from: " + (lastLineFound + offset - oldOffset) + " to: " + i + Apt.LINE_LENGTH);
-                    foundSyncFrames.add(i);
-                    // Skip to next line
-                    i = i + Apt.LINE_LENGTH;
-                    lastLineFound = i;
-                    oldOffset = offset;
-                }
-            }
-        }
-        return synced;
-    }
-
 
     /**
-     * Create Image from digitalized signal
+     * Map two values to new range
      *
-     * @param data digitalized Signal
+     * @param sourceNumber     value to map to new range
+     * @param fromA            min of old range
+     * @param fromB            max of old range
+     * @param toA              min of new range
+     * @param toB              max of new range
+     * @param decimalPrecision decimal precision
+     * @return value mapped to new range (between new min and max)
      */
-    private void makeImage(int[] data) {
-        int width = Apt.LINE_LENGTH;
-        //if last line is not complete still print part
-        int height = (int) Math.ceil((float) data.length / Apt.LINE_LENGTH);
-        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
-        int line = 0;
-        for (int i = 0; i < data.length; i++) {
-            if (i % Apt.LINE_LENGTH == 0 && i != 0)
-                line++;
-            if (foundSyncFrames.contains(i))
-                bufferedImage.setRGB(i - (line * Apt.LINE_LENGTH), line, new Color(255, 0, 0).getRGB());
-            else
-                bufferedImage.setRGB(i - (line * Apt.LINE_LENGTH), line, new Color(data[i], data[i], data[i]).getRGB());
-        }
-        try {
-            File file = new File("src/main/resources/out.png");
-            ImageIO.write(bufferedImage, "png", file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * @param sourceNumber
-     * @param fromA
-     * @param fromB
-     * @param toA
-     * @param toB
-     * @param decimalPrecision
-     * @return
-     */
-    public static double mapOneRangeToAnother(double sourceNumber, double fromA, double fromB, double toA, double toB, int decimalPrecision) {
+    private double mapOneRangeToAnother(double sourceNumber, double fromA, double fromB, double toA, double toB, int decimalPrecision) {
         double deltaA = fromB - fromA;
         double deltaB = toB - toA;
         double scale = deltaB / deltaA;
@@ -256,5 +277,10 @@ public class AptDecoder implements IAptDecoder {
         double finalNumber = (sourceNumber * scale) + offset;
         int calcScale = (int) Math.pow(10, decimalPrecision);
         return (double) Math.round(finalNumber * calcScale) / calcScale;
+    }
+
+    private void statusUpdate(String status) {
+        if (isInteractive)
+            System.out.println(status);
     }
 }

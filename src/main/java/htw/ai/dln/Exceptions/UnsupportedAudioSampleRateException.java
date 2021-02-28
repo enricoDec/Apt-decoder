@@ -10,9 +10,9 @@ package htw.ai.dln.Exceptions;
 /**
  * Unsupported Audio Sample Rate
  */
-public class UnsupportedAudioSampleRate extends Exception {
+public class UnsupportedAudioSampleRateException extends Exception {
 
-    public UnsupportedAudioSampleRate(String errorMessage) {
+    public UnsupportedAudioSampleRateException(String errorMessage) {
         super(errorMessage);
     }
 }
