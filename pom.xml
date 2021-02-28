@@ -15,9 +15,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.psambit9791</groupId>
-            <artifactId>jdsp</artifactId>
-            <version>0.6.0</version>
+            <groupId>me.tongfei</groupId>
+            <artifactId>progressbar</artifactId>
+            <version>0.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

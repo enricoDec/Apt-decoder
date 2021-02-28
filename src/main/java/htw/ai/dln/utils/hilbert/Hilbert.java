@@ -2,22 +2,23 @@ package htw.ai.dln.utils.hilbert;
 /**
  * Copyright 2007 DFKI GmbH.
  * All Rights Reserved.  Use is subject to license terms.
- *
+ * <p>
  * This file is part of MARY TTS.
- *
+ * <p>
  * MARY TTS is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, version 3 of the License.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
+
+import me.tongfei.progressbar.ProgressBar;
 
 /**
  * Computes the N-point Discrete Hilbert Transform of real valued vector x: The algorithm consists of the following stages: - X(w)
@@ -33,6 +34,8 @@ public class Hilbert {
     }
 
     public static ComplexArray transform(double[] x, int N) {
+
+        // Takes about 1sec per 2.000.000 elements on my pc
         ComplexArray X = FFTMixedRadix.fftReal(x, N);
         double[] H = new double[N];
 
@@ -42,11 +45,13 @@ public class Hilbert {
         H[0] = 1.0;
         H[NOver2] = 1.0;
 
-        for (w = 1; w <= NOver2 - 1; w++)
+        for (w = 1; w <= NOver2 - 1; w++) {
             H[w] = 2.0;
+        }
 
-        for (w = NOver2 + 1; w <= N - 1; w++)
+        for (w = NOver2 + 1; w <= N - 1; w++) {
             H[w] = 0.0;
+        }
 
         for (w = 0; w < N; w++) {
             X.real[w] *= H[w];

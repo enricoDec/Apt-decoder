@@ -6,6 +6,7 @@ import htw.ai.dln.utils.SignalUtils;
 import htw.ai.dln.utils.WavUtils;
 import htw.ai.dln.utils.hilbert.ComplexArray;
 import htw.ai.dln.utils.hilbert.Hilbert;
+import me.tongfei.progressbar.ProgressBar;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -64,6 +65,7 @@ public class AptDecoder implements IAptDecoder {
             case 2:
                 statusUpdate("Audio has two channels, converting to single channel.");
                 audio = WavUtils.stereoToMono(apt.AUDIO_BYTES, apt.AUDIO_FORMAT.getSampleSizeInBits());
+                statusUpdate("Conversion done.");
                 //Convert byte[] to sample[]
                 samples = WavUtils.convertByteArray(audio, 2, apt.AUDIO_FORMAT.isBigEndian());
                 break;
@@ -83,9 +85,11 @@ public class AptDecoder implements IAptDecoder {
         signal = Arrays.copyOf(signal, truncate);
 
         // Perform Hilbert Transform and get amplitude Envelope
+        statusUpdate("Performing Hilbert Transform.");
         double[] amplitudeEnvelope = hilbert(signal);
         // Map values to "digital" values 0 to 255
         int[] digitalized = digitalize(amplitudeEnvelope);
+        statusUpdate("done.");
 
         return digitalized;
     }
@@ -106,7 +110,7 @@ public class AptDecoder implements IAptDecoder {
         // Loop entire array and look for positive correlation of sync A frame
         // If found shift by offset from last synced line to current line
         // and make a copy of synced line(s) in sync[] <- Do this only if offset changed!
-        int indexOfLastSyncedLine = 0;
+        int indexOfLastNotSyncedLine = 0;
         int previousOffset = 0;
         for (int i = 0; i < digitalized.length; i++) {
 
@@ -123,17 +127,24 @@ public class AptDecoder implements IAptDecoder {
                 if (currentOffset != previousOffset) {
                     synced = IntStream.concat(Arrays.stream(synced),
                             Arrays.stream(Arrays.copyOfRange(digitalized,
-                                    indexOfLastSyncedLine + (currentOffset - previousOffset),
+                                    indexOfLastNotSyncedLine + (currentOffset - previousOffset),
                                     i + Apt.LINE_LENGTH))).toArray();
                     // Add to list to keep track of found lines
                     foundSyncFrames.add(i);
                     // Skip to next line
                     i = i + Apt.LINE_LENGTH;
-                    indexOfLastSyncedLine = i;
+                    indexOfLastNotSyncedLine = i;
                     previousOffset = currentOffset;
                 }
             }
-            // TODO: if sync frame of last line not found add with last offset
+            // If arrived at end and last line could not be synced, add them without offset
+            // If last line was synced looping condition will be false
+            // So if we arrive at last index it should be safe to say that the line was not synced and add them
+            // to result array
+            if (i == digitalized.length - 1) {
+                synced = IntStream.concat(Arrays.stream(synced),
+                        Arrays.stream(Arrays.copyOfRange(digitalized, indexOfLastNotSyncedLine, digitalized.length))).toArray();
+            }
         }
         if (foundSyncFrames.size() == 0)
             throw new NoSyncFrameFoundException("Could not find any sync Frame");
@@ -182,6 +193,10 @@ public class AptDecoder implements IAptDecoder {
             amplitudeEnvelope[i] = Math.sqrt(complexArray.real[i] * complexArray.real[i] + complexArray.imag[i] * complexArray.imag[i]);
         }
 
+        // Cutting interference
+        // To get a "better" max to avoid getting an anomaly as max value and getting so a dark image
+        // when digitalizing values since it will be mapped with a wrong range
+        // (implementing low pass filter or smth would be much better)
         double avg = Arrays.stream(amplitudeEnvelope).average().getAsDouble();
         for (int i = 0; i < amplitudeEnvelope.length; i++) {
             if (amplitudeEnvelope[i] > avg * 2.5)
@@ -215,23 +230,6 @@ public class AptDecoder implements IAptDecoder {
         if (expectedLines < 1)
             throw new IllegalArgumentException("Data contains no lines");
 
-        // Cutting interference
-        // To get a "better" max to avoid getting an anomaly as max value and getting so a dark image
-        // when digitalizing values since it will be mapped with a wrong range
-        // (implementing low pass filter or smth would be much better)
-
-//        // AVG
-//        double avg = 0;
-//        for (int i = 0; i < reshapedCut.length; i++) {
-//            avg += reshapedCut[i];
-//        }
-//        avg = avg / reshaped.length;
-//
-//        // Cut values above and under
-//        for (int i = 0; i < reshapedCut.length; i++) {
-//            if (reshapedCut[i] > avg * 2.5)
-//                reshapedCut[i] = 0;
-//        }
 
         double maxValueAvG = Arrays.stream(reshapedCut).max().getAsDouble();
         double minValueAvg = 0;

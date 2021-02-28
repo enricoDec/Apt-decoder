@@ -1,4 +1,3 @@
-import com.github.psambit9791.wavfile.WavFileException;
 import htw.ai.dln.Apt;
 import htw.ai.dln.AptDecoder;
 import htw.ai.dln.Exceptions.NoSyncFrameFoundException;
@@ -17,19 +16,15 @@ import java.io.IOException;
  * @since : 21.02.21
  **/
 public class Main {
-    public static void main(String[] args) throws IOException, UnsupportedAudioFileException, UnsupportedAudioSampleRateException, UnsupportedAudioChannelSizeException, WavFileException, NoSyncFrameFoundException, UnsupportedFrameSizeException {
+    public static void main(String[] args) throws IOException, UnsupportedAudioFileException, UnsupportedAudioSampleRateException, UnsupportedAudioChannelSizeException, NoSyncFrameFoundException, UnsupportedFrameSizeException {
 
-        File inputFile = new File("src/main/resources/example_stereo.wav");
+        File inputFile = new File("src/main/resources/24_02_clean.wav");
         Apt apt = new Apt(inputFile);
 
-        Long start = System.currentTimeMillis();
         AptDecoder aptDecoder = new AptDecoder(apt);
         int[] digitalized = aptDecoder.decode(1);
-        System.out.println("Millis for hilbert: " + (System.currentTimeMillis() - start));
         aptDecoder.saveImage(digitalized, new File("src/main/resources/output/raw.png"));
-        start = System.currentTimeMillis();
         int[] synced = aptDecoder.syncFrames(digitalized);
-        System.out.println("Millis for sync: " + (System.currentTimeMillis() - start));
         aptDecoder.saveImage(synced, new File("src/main/resources/output/synced.png"));
     }
 }
