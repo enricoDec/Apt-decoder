@@ -17,7 +17,7 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException, UnsupportedAudioFileException, UnsupportedAudioSampleRate, UnsupportedAudioChannelSize, WavFileException {
 
-        File inputFile = new File("src/main/resources/24_02.wav");
+        File inputFile = new File("src/main/resources/example_cut.wav");
         Apt apt = new Apt(inputFile);
 
         AptDecoder aptDecoder = new AptDecoder(apt);

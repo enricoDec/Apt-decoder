@@ -183,6 +183,7 @@ public class AptDecoder implements IAptDecoder {
 
         //Loop entire array and look for positive correlation of sync A frame
         int lastLineFound = 0;
+        int oldOffset = 0;
         for (int i = 0; i < reshaped.length; i++) {
 
             int[] y = Arrays.copyOfRange(reshaped, i, i + x.length);
@@ -192,13 +193,17 @@ public class AptDecoder implements IAptDecoder {
                 System.out.println("Start of a line found with correlation of" + " " + correlation);
                 System.out.println("Prob at line: " + i / Apt.LINE_LENGTH + " i= " + i);
                 int offset = i % Apt.LINE_LENGTH;
-                System.out.println("offset = " + offset);
-                // Copy corrected current line and lines before if not already corrected
-                synced = IntStream.concat(Arrays.stream(synced), Arrays.stream(Arrays.copyOfRange(reshaped, lastLineFound + offset, i + Apt.LINE_LENGTH))).toArray();
-                foundSyncFrames.add(i);
-                // Skip to next line
-                i = i + Apt.LINE_LENGTH;
-                lastLineFound = i;
+                // Copy corrected current line and lines before if not already corrected and offset changed
+                if (offset != oldOffset) {
+                    System.out.println("offset = " + offset);
+                    synced = IntStream.concat(Arrays.stream(synced), Arrays.stream(Arrays.copyOfRange(reshaped, lastLineFound + (offset - oldOffset), i + Apt.LINE_LENGTH))).toArray();
+                    System.out.println("Copyed array from: " + (lastLineFound + offset - oldOffset) + " to: " + i + Apt.LINE_LENGTH);
+                    foundSyncFrames.add(i);
+                    // Skip to next line
+                    i = i + Apt.LINE_LENGTH;
+                    lastLineFound = i;
+                    oldOffset = offset;
+                }
             }
         }
         return synced;
