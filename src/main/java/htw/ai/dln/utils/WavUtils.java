@@ -15,25 +15,7 @@ import java.nio.ByteBuffer;
  * @version : 1.0
  * @since : 22.02.21
  **/
-public class AudioUtils {
-
-    public static double[] toDoubleArray(byte[] bytes) {
-        int times = Double.SIZE / Byte.SIZE;
-        double[] doubles = new double[bytes.length / times];
-        for (int i = 0; i < doubles.length; i++) {
-            doubles[i] = ByteBuffer.wrap(bytes, i * times, times).getDouble();
-        }
-        return doubles;
-    }
-
-    public static byte[] toByteArray(double[] doubles) {
-        int times = Double.SIZE / Byte.SIZE;
-        byte[] bytes = new byte[doubles.length * times];
-        for (int i = 0; i < doubles.length; i++) {
-            ByteBuffer.wrap(bytes, i * times, times).putDouble(doubles[i]);
-        }
-        return bytes;
-    }
+public class WavUtils {
 
     /**
      * Converts the byte array into an array of integers where each integer
@@ -46,7 +28,7 @@ public class AudioUtils {
     public static int[] convertByteArray(byte[] audioData, AudioFormat format) {
         int MAX_SIZE_RMS = audioData.length;
 
-        if (format.getFrameSize() == 2) {
+        if (format.getFrameSize() == 2 || format.getFrameSize() == 4) {
             int[] samples = new int[Math.min(audioData.length / 2, MAX_SIZE_RMS)];
             int offset = audioData.length - 2 * samples.length;
             for (int i = 0; i < samples.length; i++) {

@@ -1,4 +1,4 @@
-package htw.ai.dln.hilbert;
+package htw.ai.dln.utils.hilbert;
 /**
  * Copyright 2004-2006 DFKI GmbH.
  * All Rights Reserved.  Use is subject to license terms.
