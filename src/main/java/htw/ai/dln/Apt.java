@@ -36,7 +36,7 @@ public class Apt {
     public Apt(@NotNull File audioFile) throws IOException, UnsupportedAudioFileException, UnsupportedAudioSampleRateException, UnsupportedAudioChannelSizeException {
         // Check if file exists and can read
         if (!audioFile.exists())
-            throw new IllegalArgumentException(audioFile.getAbsolutePath() + " does not exist");
+            throw new IllegalArgumentException("File: " + audioFile.getAbsolutePath() + " does not exist.");
         if (!audioFile.canRead())
             throw new IllegalArgumentException(audioFile.getAbsolutePath() + " couldn't be read by the JVM");
 

@@ -18,8 +18,6 @@ package htw.ai.dln.utils.hilbert;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import me.tongfei.progressbar.ProgressBar;
-
 /**
  * Computes the N-point Discrete Hilbert Transform of real valued vector x: The algorithm consists of the following stages: - X(w)
  * = FFT(x) is computed - H(w), DFT of a Hilbert transform filter h[n], is created: H[0]=H[N/2]=1 H[w]=2 for w=1,2,...,N/2-1

@@ -2,11 +2,12 @@ package htw.ai.dln;
 
 import htw.ai.dln.Exceptions.NoSyncFrameFoundException;
 import htw.ai.dln.Exceptions.UnsupportedFrameSizeException;
+import htw.ai.dln.utils.ArrayUtils;
 import htw.ai.dln.utils.SignalUtils;
 import htw.ai.dln.utils.WavUtils;
 import htw.ai.dln.utils.hilbert.ComplexArray;
+import htw.ai.dln.utils.hilbert.ComplexNumber;
 import htw.ai.dln.utils.hilbert.Hilbert;
-import me.tongfei.progressbar.ProgressBar;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
 /**
@@ -37,7 +39,7 @@ public class AptDecoder implements IAptDecoder {
     /**
      * Apt decoder
      *
-     * @param apt Wav to decode
+     * @param apt     Wav to decode
      */
     public AptDecoder(Apt apt) {
         this.apt = apt;
@@ -49,10 +51,9 @@ public class AptDecoder implements IAptDecoder {
      * Result will be the raw decoded image (no sync) or corrections
      * The Result will depend a lot from the amount of noise in the input signal
      *
-     * @param threads number of threads to use
      * @return int[] each int equals to one pixel, ranges from 0 to 255
      */
-    public int[] decode(int threads) throws UnsupportedFrameSizeException {
+    public int[] decode() throws UnsupportedFrameSizeException {
         //Check if stereo or mono and get audio without header as byte[]
         int[] samples;
         switch (apt.AUDIO_FORMAT.getChannels()) {

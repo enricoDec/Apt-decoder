@@ -13,7 +13,7 @@ import java.io.File;
  **/
 public interface IAptDecoder {
 
-    int[] decode(int threads) throws UnsupportedFrameSizeException;
+    int[] decode() throws UnsupportedFrameSizeException;
 
     int[] syncFrames(int[] digitalized) throws NoSyncFrameFoundException;
 
