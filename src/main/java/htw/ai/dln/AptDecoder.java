@@ -147,7 +147,7 @@ public class AptDecoder implements IAptDecoder {
         if (foundSyncFrames.size() == 0)
             throw new NoSyncFrameFoundException("Could not find any sync Frame.");
 
-        statusUpdate("Found Sync Lines: " + foundSyncFrames.size());
+        statusUpdate("Sync Lines Found: " + foundSyncFrames.size());
         return synced;
     }
 
@@ -240,18 +240,6 @@ public class AptDecoder implements IAptDecoder {
         for (int i = 0; i < reshapedCut.length; i++) {
             data[i] = (int) mapOneRangeToAnother(reshapedCut[i], minValueAvg, maxValueAvG, 0, 255, 1);
         }
-
-
-        // PLOTTING
-        // TODO: Remove
-//        int[] temp = Arrays.copyOfRange(data, data.length / 2, data.length / 2 + 1040);
-//        double[] temp2 = new double[data.length];
-//
-//        for (int i = 0; i < data.length; i++) {
-//            temp2[i] = data[i];
-//        }
-//        SignalUtils.plotSignal(temp2, data.length);
-
         return data;
     }
 
