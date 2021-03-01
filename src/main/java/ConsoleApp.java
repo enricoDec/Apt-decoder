@@ -102,15 +102,15 @@ public class ConsoleApp {
                     synced = aptDecoder.syncFrames(image);
                 } catch (NoSyncFrameFoundException e) {
                     printError(e.getMessage());
+                    print("Saving raw version since no sync lines found :(");
                     synced = null;
                 }
             }
             if (synced != null)
                 aptDecoder.saveImage(synced, outputImage);
-            else {
-                print("Saving raw version since no sync lines found :(");
+            else
                 aptDecoder.saveImage(image, outputImage);
-            }
+
         } catch (UnsupportedFrameSizeException e) {
             printError(e.getMessage());
             System.exit(1);
@@ -125,7 +125,7 @@ public class ConsoleApp {
     public static void usage() {
         String raw = "-R or --Raw to output the raw image without sync or corrections";
         String debug = "-D or --Debug to have some debug output";
-        String options = raw + System.lineSeparator() + debug;
+        String options = "Options:" + System.lineSeparator() + raw + System.lineSeparator() + debug;
         String usage = "Arguments: [Input Audio Path] [Output Image Path] [Options]";
         String example = "Example: audio.wav Raw_Output.png -R";
 

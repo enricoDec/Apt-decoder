@@ -57,12 +57,11 @@ public class Apt {
 
     @Override
     public String toString() {
-        return "Audio Info:" + System.lineSeparator() +
+        return "Audio Info" + System.lineSeparator() + System.lineSeparator() +
                 "Channels: " + AUDIO_FORMAT.getChannels() + System.lineSeparator() +
                 "Sample Rate: " + AUDIO_FORMAT.getSampleRate() + System.lineSeparator() +
                 "Frame Size: " + AUDIO_FORMAT.getFrameSize() + System.lineSeparator() +
                 "Is Big Endian: " + AUDIO_FORMAT.isBigEndian() + System.lineSeparator() +
-                "Frame Size: " + AUDIO_FORMAT.getFrameSize() + System.lineSeparator();
-
+                "Size in Bytes: " + AUDIO_BYTES.length + System.lineSeparator();
     }
 }
