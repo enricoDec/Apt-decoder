@@ -2,11 +2,9 @@ package htw.ai.dln;
 
 import htw.ai.dln.Exceptions.NoSyncFrameFoundException;
 import htw.ai.dln.Exceptions.UnsupportedFrameSizeException;
-import htw.ai.dln.utils.ArrayUtils;
 import htw.ai.dln.utils.SignalUtils;
 import htw.ai.dln.utils.WavUtils;
 import htw.ai.dln.utils.hilbert.ComplexArray;
-import htw.ai.dln.utils.hilbert.ComplexNumber;
 import htw.ai.dln.utils.hilbert.Hilbert;
 
 import javax.imageio.ImageIO;
@@ -17,7 +15,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
 /**
@@ -34,7 +31,7 @@ public class AptDecoder implements IAptDecoder {
     private int expectedLines;
     private int actualLines;
     private List<Integer> foundSyncFrames = new ArrayList<>();
-    public boolean isInteractive = true;
+    public boolean isInteractive = false;
 
     /**
      * Apt decoder
@@ -90,7 +87,7 @@ public class AptDecoder implements IAptDecoder {
         double[] amplitudeEnvelope = hilbert(signal);
         // Map values to "digital" values 0 to 255
         int[] digitalized = digitalize(amplitudeEnvelope);
-        statusUpdate("done.");
+        statusUpdate("Done.");
 
         return digitalized;
     }

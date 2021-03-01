@@ -11,17 +11,6 @@ import java.util.List;
  **/
 public class ArrayUtils {
 
-    // Example usage:
-    //
-    // int[] numbers = {1, 2, 3, 4, 5, 6, 7};
-    // int[][] chunks = chunkArray(numbers, 3);
-    //
-    // chunks now contains [
-    //                         [1, 2, 3],
-    //                         [4, 5, 6],
-    //                         [7]
-    //                     ]
-
     /**
      * Splits an Array into N chunks.
      * <p>
