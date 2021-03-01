@@ -36,7 +36,7 @@ public class AptDecoder implements IAptDecoder {
     /**
      * Apt decoder
      *
-     * @param apt     Wav to decode
+     * @param apt Wav to decode
      */
     public AptDecoder(Apt apt) {
         this.apt = apt;
@@ -78,7 +78,6 @@ public class AptDecoder implements IAptDecoder {
         }
 
         // Reduce unnecessary sample rate
-        // Not sure why?
         int truncate = (int) (apt.AUDIO_FORMAT.getSampleRate() * (signal.length / (int) apt.AUDIO_FORMAT.getSampleRate()));
         signal = Arrays.copyOf(signal, truncate);
 
@@ -100,6 +99,7 @@ public class AptDecoder implements IAptDecoder {
      * @return synced Image with syn Frames
      */
     public int[] syncFrames(int[] digitalized) throws NoSyncFrameFoundException {
+        statusUpdate("Searching for Sync Pattern. Expected Lines: " + expectedLines);
         // Sync Patter BB WW BB WW BB...
         int[] syncPattern = new int[]{0, 0, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0};
         int[] synced = new int[0];
@@ -145,7 +145,9 @@ public class AptDecoder implements IAptDecoder {
             }
         }
         if (foundSyncFrames.size() == 0)
-            throw new NoSyncFrameFoundException("Could not find any sync Frame");
+            throw new NoSyncFrameFoundException("Could not find any sync Frame.");
+
+        statusUpdate("Found Sync Lines: " + foundSyncFrames.size());
         return synced;
     }
 
@@ -156,6 +158,7 @@ public class AptDecoder implements IAptDecoder {
      * @param saveLocation path to output file
      */
     public void saveImage(int[] data, File saveLocation) {
+        statusUpdate("Creating Image.");
         //if last line is not complete still count it
         actualLines = (int) Math.ceil((float) data.length / Apt.LINE_LENGTH);
 

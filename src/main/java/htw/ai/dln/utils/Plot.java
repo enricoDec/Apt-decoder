@@ -1,26 +1,13 @@
 package htw.ai.dln.utils;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.Stroke;
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-
-import javax.imageio.ImageIO;
+import java.util.*;
 
 /**
  * Simple implementation of plot. Minimal features, no dependencies besides standard libraries.

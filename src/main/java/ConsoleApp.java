@@ -77,6 +77,7 @@ public class ConsoleApp {
         try {
             File inputAudio = new File(args[0]);
             apt = new Apt(inputAudio);
+            print(apt.toString());
         } catch (IOException | UnsupportedAudioFileException | IllegalArgumentException e) {
             printError(e.getMessage());
             System.exit(1);
@@ -106,8 +107,10 @@ public class ConsoleApp {
             }
             if (synced != null)
                 aptDecoder.saveImage(synced, outputImage);
-            else
+            else {
+                print("Saving raw version since no sync lines found :(");
                 aptDecoder.saveImage(image, outputImage);
+            }
         } catch (UnsupportedFrameSizeException e) {
             printError(e.getMessage());
             System.exit(1);

@@ -25,7 +25,7 @@ public class Apt {
 
     /**
      * Create APT Object
-     * Audio File should have a sample rate of 20800, this is to speed up decoding
+     * Audio File should have a sample rate of 20800
      *
      * @throws UnsupportedAudioFileException        if the File does not point to valid audio file data recognized by the system
      * @throws IOException                          if an I/O exception occurs
@@ -53,5 +53,16 @@ public class Apt {
         if (AUDIO_FORMAT.getChannels() > 2)
             throw new UnsupportedAudioChannelSizeException("Input Audio has " + AUDIO_FORMAT.getChannels() + " channels");
         audioInputStream.close();
+    }
+
+    @Override
+    public String toString() {
+        return "Audio Info:" + System.lineSeparator() +
+                "Channels: " + AUDIO_FORMAT.getChannels() + System.lineSeparator() +
+                "Sample Rate: " + AUDIO_FORMAT.getSampleRate() + System.lineSeparator() +
+                "Frame Size: " + AUDIO_FORMAT.getFrameSize() + System.lineSeparator() +
+                "Is Big Endian: " + AUDIO_FORMAT.isBigEndian() + System.lineSeparator() +
+                "Frame Size: " + AUDIO_FORMAT.getFrameSize() + System.lineSeparator();
+
     }
 }
