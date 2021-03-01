@@ -1,4 +1,4 @@
-# apt-decoder
+# NOAA APT decoder
 
 # Console Application Usage
 1. Download the latest jar release 
