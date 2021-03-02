@@ -10,3 +10,5 @@ java -jar audio.wav output.png
 ## Options
 - -R or --Raw to save a raw version of the output image (no sync, or correction)
 - -D or --Debug to output some debug info
+
+![](../../blob/docs/images/synced.png)
