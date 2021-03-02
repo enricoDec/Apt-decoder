@@ -1,4 +1,5 @@
 # NOAA APT decoder
+[Javadoc](https://enricodec.github.io/apt-decoder/)
 
 # Console Application Usage
 1. Download the latest jar release 
