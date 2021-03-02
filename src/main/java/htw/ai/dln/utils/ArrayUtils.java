@@ -16,7 +16,7 @@ public class ArrayUtils {
      * <p>
      * Example: <p>
      * double[] numbers = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0}; <p>
-     * double[][] chunks = chunkArray(numbers, 3); <p>
+     * double[][] chunks = chunkArray(numbers, 3);
      * <p>
      * Chunks now contains:
      * [[1, 2, 3],

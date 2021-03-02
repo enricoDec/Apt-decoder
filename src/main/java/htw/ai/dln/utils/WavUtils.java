@@ -26,6 +26,7 @@ public class WavUtils {
      * @param frameSize   size of frames
      * @param isBigEndian is big endian
      * @return the corresponding array of integers as samples
+     * @throws UnsupportedFrameSizeException If the frame size is &gt; 2
      */
     public static int[] convertByteArray(byte[] audioData, int frameSize, boolean isBigEndian) throws UnsupportedFrameSizeException {
         int MAX_SIZE_RMS = audioData.length;

@@ -27,6 +27,7 @@ public class Apt {
      * Create APT Object
      * Audio File should have a sample rate of 20800
      *
+     * @param audioFile Audio Input File
      * @throws UnsupportedAudioFileException        if the File does not point to valid audio file data recognized by the system
      * @throws IOException                          if an I/O exception occurs
      * @throws IllegalArgumentException             if file does not exist or JVM couldn't read file

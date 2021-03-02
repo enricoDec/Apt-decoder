@@ -20,7 +20,7 @@ public class SignalUtils {
      *
      * @param signal        Signal to plot, can't be null
      * @param samplesToPlot number of samples to plot
-     * @throws IllegalArgumentException if samplesToPlot is > signal.length
+     * @throws IllegalArgumentException if samplesToPlot is &gt; signal.length
      */
     public static void plotSignal(@NotNull double[] signal, int samplesToPlot) {
         if (samplesToPlot > signal.length)
@@ -62,7 +62,7 @@ public class SignalUtils {
      * @param signal        Signal 1
      * @param signal2       Signal 2
      * @param samplesToPlot number of samples to plot
-     * @throws IllegalArgumentException if samplesToPlot is > signal.length
+     * @throws IllegalArgumentException if samplesToPlot is &gt; signal.length
      */
     public static void plotSignals(@NotNull double[] signal, @NotNull double[] signal2, int samplesToPlot) {
         if (samplesToPlot > signal.length || samplesToPlot > signal2.length)
