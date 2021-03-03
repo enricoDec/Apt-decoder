@@ -39,14 +39,14 @@ public class WavUtils {
                     samples[i] = ((audioData[offset + i * 2] << 8)
                             | (audioData[offset + i * 2 + 1] & 0xFF));
                 } else {
-                    samples[i] = ((audioData[offset + i * 2 + 0] & 0xFF)
+                    samples[i] = ((audioData[offset + i * 2] & 0xFF)
                             | (audioData[offset + i * 2 + 1] << 8));
                 }
             }
             return samples;
         } else if (frameSize == 1) {
-            int[] samples = new int[Math.min(audioData.length, MAX_SIZE_RMS)];
-            int offset = audioData.length - samples.length;
+            int[] samples = new int[audioData.length];
+            int offset = 0;
             for (int i = 0; i < samples.length; i++) {
                 samples[i] = (audioData[offset + i] << 8);
             }
@@ -67,13 +67,13 @@ public class WavUtils {
         // Make buffer to fit one channel
         byte[] buffer = new byte[stereoAudio.length / 2];
 
-        // 16bits per channel -> 2 bytes per channel
+        // 16bits per channel = 2 bytes per channel
         int sampleByteSize = sampleSizeInBits / 8;
 
-        // if 2 bytes per sample CH1,CH1,CH2,CH2,...
+        // CH1,CH1,CH2,CH2,CH1,CH1,CH2,CH2
         for (int i = 0; i < stereoAudio.length / sampleByteSize; i = i + 2) {
-            buffer[i] = stereoAudio[i * sampleByteSize];
-            buffer[i + 1] = stereoAudio[i * sampleByteSize + 1];
+            if (sampleByteSize >= 0)
+                System.arraycopy(stereoAudio, i * sampleByteSize, buffer, i, sampleByteSize);
         }
         return buffer;
     }
