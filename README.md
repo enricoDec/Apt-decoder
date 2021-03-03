@@ -5,7 +5,7 @@ The project is still being developed activly any feedback would be much apreciat
 # Audio Format
 - Audio has to be .wav
 - Stereo or Mono (Stereo will be converted to Mono automatically)
-- Sample Rate has to be 20800Hz (Guide on how to resample with audacity [below](#Audacity_Resample))
+- Sample Rate has to be 20800Hz (Guide on how to resample with audacity [below](#audacity-resample))
 
 # Console Application Usage
 1. Download the latest jar release 
