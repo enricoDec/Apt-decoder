@@ -11,7 +11,7 @@ The project is still being developed activly any feedback would be much apreciat
 1. Download the latest jar release 
 2. Execute with java -jar apt-decoder.jar [Input Audio File] [Output Image File] [Options]
 ```shell
-java -jar audio.wav output.png
+java -jar apt-decoder.jar audio.wav output.png
 ```
 ## Options
 - -R or --Raw to save a raw version of the output image (no sync, or correction)
