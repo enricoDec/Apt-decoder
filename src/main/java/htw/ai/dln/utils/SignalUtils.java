@@ -104,47 +104,15 @@ public class SignalUtils {
 
     /**
      * Function that returns correlation coefficient.
-     * https://www.geeksforgeeks.org/program-find-correlation-coefficient/
      *
-     * @param x      array x
-     * @param y      array y
-     * @param length array length
+     * @param x array x, must have same length as y
+     * @param y array y, must have same length as x
      * @return value between -1 and 1
      * - 1 X and Y are negatively correlated
      * + 1 X and Y are positively correlated
      */
-    public static double correlationCoefficient(int[] x, int[] y, int length) {
-
-        int sum_X = 0, sum_Y = 0, sum_XY = 0;
-        int squareSum_X = 0, squareSum_Y = 0;
-
-        for (int i = 0; i < length; i++) {
-            // sum of elements of array X.
-            sum_X = sum_X + x[i];
-
-            // sum of elements of array Y.
-            sum_Y = sum_Y + y[i];
-
-            // sum of X[i] * Y[i].
-            sum_XY = sum_XY + x[i] * y[i];
-
-            // sum of square of array elements.
-            squareSum_X = squareSum_X + x[i] * x[i];
-            squareSum_Y = squareSum_Y + y[i] * y[i];
-        }
-
-        // use formula for calculating correlation
-        // coefficient.
-        double corr = (length * sum_XY - sum_X * sum_Y) /
-                (Math.sqrt((length * squareSum_X -
-                        sum_X * sum_X) * (length * squareSum_Y -
-                        sum_Y * sum_Y)));
-
-        return corr;
-    }
-
-    public static double correlation(@NotNull int[] xs, @NotNull int[] ys) {
-        if (xs.length != ys.length)
+    public static double correlation(@NotNull int[] x, @NotNull int[] y) {
+        if (x.length != y.length)
             throw new IllegalArgumentException("Arrays not of the same length");
 
         double sx = 0.0;
@@ -153,17 +121,17 @@ public class SignalUtils {
         double syy = 0.0;
         double sxy = 0.0;
 
-        int n = xs.length;
+        int n = x.length;
 
         for (int i = 0; i < n; ++i) {
-            double x = xs[i];
-            double y = ys[i];
+            double x2 = x[i];
+            double y2 = y[i];
 
-            sx += x;
-            sy += y;
-            sxx += x * x;
-            syy += y * y;
-            sxy += x * y;
+            sx += x2;
+            sy += y2;
+            sxx += x2 * x2;
+            syy += y2 * y2;
+            sxy += x2 * y2;
         }
 
         // covariation
@@ -177,14 +145,20 @@ public class SignalUtils {
         return cov / sigmax / sigmay;
     }
 
+    /**
+     * Low Pass Filter.
+     * Needs improvements
+     *
+     * @param signal       Signal
+     * @param frequency    Frequency
+     * @param frequencyCut Frequency to cut
+     * @return Low Pass Filtered Signal
+     */
     public static double[] crudeLowPass(double[] signal, double frequency, double frequencyCut) {
         //Low pass filter (kinda)
         int N = signal.length;
 
-        double f_c = frequencyCut;
-        double f_s = frequency;
-
-        double k = f_c / f_s;
+        double k = frequencyCut / frequency;
         int index = (int) (k * N);
 
         //Low pass filter

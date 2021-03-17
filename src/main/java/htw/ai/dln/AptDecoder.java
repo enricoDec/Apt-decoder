@@ -215,15 +215,13 @@ public class AptDecoder implements IAptDecoder {
      */
     private int[] digitalize(double[] amplitudeEnvelope) {
 
-        // Not sure about this part but it's needed to work
+        // This is necessary since we sampled x5 the original sample rate?
         double[][] reshaped = new double[amplitudeEnvelope.length / 5][5];
         for (int i = 0; i < amplitudeEnvelope.length / 5; i++) {
             System.arraycopy(amplitudeEnvelope, i * 5, reshaped[i], 0, 5);
         }
         double[] reshapedCut = new double[reshaped.length];
         for (int i = 0; i < reshaped.length; i++) {
-            //Don't know why you only get every 3rd value and skip the rest
-            //You could also get every 2nd or 4th but you have to skip the rest
             reshapedCut[i] = reshaped[i][2];
         }
 
