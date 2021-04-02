@@ -1,6 +1,6 @@
 # NOAA APT decoder
 [Javadoc](https://enricodec.github.io/Apt-decoder/)  
-The project is still being developed activly any feedback would be much apreciated!
+The project is still being developed any feedback would be much apreciated!
 
 # Audio Format
 - Audio has to be .wav
