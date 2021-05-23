@@ -2,6 +2,8 @@
 [Javadoc](https://enricodec.github.io/Apt-decoder/)  
 The project is still being developed any feedback would be much apreciated!
 
+[Documentation](../../blob/main/Receiving_and_Decoding_APT.pdf)
+
 # Audio Format
 - Audio has to be .wav
 - Stereo or Mono (Stereo will be converted to Mono automatically)
